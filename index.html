@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>干支けし2 まわして、そろえる</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ai:#1d2a4d; --ai2:#26376a; --ai3:#324679;
+  --kin:#d9b25a; --shu:#c8402f; --kinari:#f1e8d4; --usu:#a9b8dc;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --ai:#141e3a; --ai2:#1f2d58; --ai3:#2a3c6c; }
+}
+:root[data-theme="dark"]{ --ai:#141e3a; --ai2:#1f2d58; --ai3:#2a3c6c; }
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background-color:var(--ai);
+  background-image:radial-gradient(circle at 50% 100%, transparent 17px, rgba(217,178,90,.09) 18px, transparent 19.5px, transparent 25px, rgba(217,178,90,.09) 26px, transparent 27.5px);
+  background-size:56px 28px;
+  color:var(--kinari);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  display:flex; justify-content:center;
+  overflow:hidden; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; touch-action:none; overscroll-behavior:none; position:fixed; width:100%;
+}
+#app{width:100%;max-width:460px;height:100%;position:relative;display:flex;flex-direction:column;padding:10px 12px}
+.screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:0}
+.screen.on{display:flex}
+button{font:inherit;cursor:pointer;border:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--kin);outline-offset:3px}
+
+.ring{position:relative;width:min(78vw,300px);aspect-ratio:1}
+.ring span{position:absolute;left:50%;top:50%;font-size:clamp(22px,7vw,30px);transform:translate(-50%,-50%)}
+.title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.title h1{margin:0;font-family:"Yuji Syuku","Hiragino Mincho ProN",serif;font-weight:400;font-size:clamp(42px,13vw,58px);line-height:1;letter-spacing:.04em}
+.title h1 small{display:block;font-size:.55em;color:var(--kin);margin-top:6px}
+.title p{margin:10px 0 0;font-size:15px;color:var(--usu)}
+.hanko{background:var(--shu);color:var(--kinari);font-weight:900;font-size:20px;padding:14px 38px;border-radius:10px;box-shadow:0 4px 0 #8b2a1f;letter-spacing:.08em}
+.hanko:active{transform:translateY(3px);box-shadow:0 1px 0 #8b2a1f}
+.note{font-size:13px;color:var(--usu);text-align:center;line-height:1.7;max-width:30em;margin:0}
+.best{font-size:13px;color:var(--kin)}
+
+.sel h2{margin:0;font-family:"Yuji Syuku",serif;font-weight:400;font-size:32px}
+.grid12{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.grid12 button{background:var(--ai2);color:var(--kinari);border:2px solid var(--ai3);border-radius:14px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.grid12 button:hover,.grid12 button:focus-visible{border-color:var(--kin)}
+.grid12 .em{font-size:30px;line-height:1.1}
+.grid12 .kj{font-family:"Yuji Syuku",serif;font-size:20px}
+.grid12 .yo{font-size:11px;color:var(--usu)}
+
+#game{justify-content:flex-start;gap:8px}
+.hud{width:100%;display:flex;align-items:stretch;gap:8px}
+.hud .box{flex:1;background:var(--ai2);border-radius:10px;padding:6px 8px;text-align:center}
+.hud .lb{font-size:11px;color:var(--usu)}
+.hud .v{font-size:22px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.hud .me{flex:1.2;border:2px solid var(--kin)}
+.hud .me .v{font-size:20px}
+.hud .low .v{color:#ff8a6b}
+#wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border-radius:14px;touch-action:none}
+.ctrl{display:flex;gap:10px;width:100%;justify-content:center}
+.ctrl button{background:var(--ai2);color:var(--kinari);border:2px solid var(--ai3);border-radius:12px;padding:8px 0;font-size:15px;font-weight:700;flex:1;max-width:120px}
+.ctrl button.mid{border-color:var(--kin);color:var(--kin)}
+.ctrl button:disabled{opacity:.35;cursor:default}
+.rule{font-size:12.5px;color:var(--usu);text-align:center;line-height:1.6;margin:0}
+.rule b{color:var(--kin);font-weight:700}
+.quit{background:transparent;color:var(--usu);font-size:13px;text-decoration:underline;padding:2px}
+
+#result{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,14,30,.72);z-index:5;padding:20px}
+#result.on{display:flex}
+.card{background:var(--kinari);color:#2a2320;border-radius:18px;padding:26px 22px;width:100%;max-width:330px;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.25)}
+.card h3{margin:0;font-family:"Yuji Syuku",serif;font-weight:400;font-size:34px}
+.card .big{font-size:48px;font-weight:900;color:var(--shu);line-height:1.1;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+.card .sub{font-size:14px;margin:4px 0}
+.card .rank{font-family:"Yuji Syuku",serif;font-size:22px;margin:14px 0 18px}
+.card .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.card .ghost{background:transparent;color:#2a2320;border:2px solid #2a2320;border-radius:10px;padding:12px 16px;font-weight:700}
+@media (prefers-reduced-motion: reduce){ .hanko:active{transform:none} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section class="screen on" id="title">
+    <div class="ring" id="ring">
+      <div class="title">
+        <h1>干支けし<small>弐</small></h1>
+        <p>まわして、そろえる。</p>
+      </div>
+    </div>
+    <button class="hanko" id="btnStart">はじめる</button>
+    <p class="best" id="bestTitle"></p>
+  </section>
+
+  <section class="screen sel" id="select">
+    <h2>あなたの干支は？</h2>
+    <div class="grid12" id="grid12"></div>
+    <p class="note">えらんだ干支の隣にいる🐱は、その干支がそろって消えるとき一緒に消えるよ。</p>
+  </section>
+
+  <section class="screen" id="game">
+    <div class="hud">
+      <div class="box" id="hudMoves"><div class="lb">のこり手数</div><div class="v" id="vMoves">25</div></div>
+      <div class="box"><div class="lb">点数</div><div class="v" id="vScore">0</div></div>
+      <div class="box"><div class="lb">猫</div><div class="v" id="vCats">0</div></div>
+      <div class="box me"><div class="lb">あなた</div><div class="v" id="vMe">🐯寅</div></div>
+    </div>
+    <div id="wrap"><canvas id="cv"></canvas></div>
+    <div class="ctrl">
+      <button id="bL" disabled aria-label="左にまわす">⟲ 左</button>
+      <button id="bOK" class="mid" disabled>収める</button>
+      <button id="bR" disabled aria-label="右にまわす">右 ⟳</button>
+    </div>
+    <p class="rule">駒をなぞると隣（横・縦・斜め）と入れ替え。◇を押すと4駒が浮いて回転、もう一度軸を押して収める。縦・横・斜めに3つで消える。<br>🐱は消せない。でも<b id="ruleMe">寅</b>がそろった時、隣の🐱も一緒に消える。</p>
+    <button class="quit" id="btnQuit">やめてタイトルへ</button>
+  </section>
+
+  <div id="result">
+    <div class="card">
+      <h3>おしまい</h3>
+      <div class="big" id="rScore">0</div>
+      <p class="sub" id="rCats"></p>
+      <p class="sub" id="rBest"></p>
+      <p class="rank" id="rRank"></p>
+      <div class="row">
+        <button class="hanko" id="btnAgain">もう一回</button>
+        <button class="ghost" id="btnReselect">干支をえらびなおす</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+const ETO = [
+  ['子','🐭','ね','#8e9aaf'], ['丑','🐮','うし','#7a5c3e'], ['寅','🐯','とら','#e0a030'],
+  ['卯','🐰','う','#e58fa8'], ['辰','🐲','たつ','#3f8f7a'], ['巳','🐍','み','#7b6bb0'],
+  ['午','🐴','うま','#c8402f'], ['未','🐑','ひつじ','#c9bd9c'], ['申','🐵','さる','#b86b3c'],
+  ['酉','🐔','とり','#c33a6b'], ['戌','🐶','いぬ','#5d7fb8'], ['亥','🐗','い','#5a6b3a']
+];
+const COLS = 7, ROWS = 8, CAT = -1, MOVES = 25, CAT_RATE = 0.08, KINDS = 6;
+const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const $ = id => document.getElementById(id);
+
+function loadBest(){ try{ return +(localStorage.getItem('tg.305.best') || localStorage.getItem('etokeshi2_best') || 0) }catch(e){ return 0 } }
+function saveBest(v){ try{ localStorage.setItem('tg.305.best', v) }catch(e){} }
+function loadMe(){ try{ const v = localStorage.getItem('tg.305.me'); if(v !== null) return +v; const old = localStorage.getItem('etokeshi_me'); return old === null ? null : +old }catch(e){ return null } }
+function saveMe(v){ try{ localStorage.setItem('tg.305.me', v) }catch(e){} }
+
+// ---------- sound ----------
+let ac = null;
+function audio(){ if(!ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)() }catch(e){} } return ac }
+function tone(f1, f2, dur, type='triangle', vol=.12){
+  const a = audio(); if(!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+  o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t+dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur);
+}
+const sfx = {
+  pop: c => tone(520 + c*90, 780 + c*120, .14),
+  nya: () => { tone(900, 520, .22, 'sine', .14); setTimeout(()=>tone(700, 1000, .12, 'sine', .08), 90) },
+  lift: () => tone(300, 600, .12, 'sine', .08),
+  drop: () => tone(500, 220, .12, 'sine', .08),
+  turn: d => tone(d > 0 ? 440 : 520, d > 0 ? 520 : 440, .08, 'sine', .06)
+};
+
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)) }
+
+(function buildRing(){
+  const ring = $('ring');
+  const items = ETO.map(e => e[1]); items.splice(7, 0, '🐱');
+  items.forEach((em, i) => {
+    const s = document.createElement('span');
+    const a = (i / items.length) * Math.PI * 2 - Math.PI/2;
+    s.textContent = em;
+    s.style.left = (50 + Math.cos(a) * 44) + '%';
+    s.style.top  = (50 + Math.sin(a) * 44) + '%';
+    ring.appendChild(s);
+  });
+})();
+function refreshBestTitle(){ const b = loadBest(); $('bestTitle').textContent = b ? `さいこう点 ${b}` : '' }
+refreshBestTitle();
+
+(function buildSelect(){
+  const g = $('grid12');
+  ETO.forEach((e, i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="em">${e[1]}</span><span class="kj">${e[0]}</span><span class="yo">${e[2]}</span>`;
+    b.setAttribute('aria-label', `${e[0]}（${e[2]}）`);
+    b.onclick = () => { my = i; saveMe(i); startGame() };
+    g.appendChild(b);
+  });
+})();
+
+$('btnStart').onclick = () => { audio(); show('select') };
+$('btnQuit').onclick = () => { running = false; refreshBestTitle(); show('title') };
+$('btnAgain').onclick = () => { $('result').classList.remove('on'); startGame() };
+$('btnReselect').onclick = () => { $('result').classList.remove('on'); show('select') };
+$('bL').onclick = () => rotate(-1);
+$('bR').onclick = () => rotate(1);
+$('bOK').onclick = () => commit();
+
+// ---------- state ----------
+const cv = $('cv'), ctx = cv.getContext('2d');
+let my = loadMe() ?? 2, kinds = [], grid = [], tiles = [], parts = [], floats = [];
+let score = 0, moves = MOVES, cats = 0, busy = false, running = false, cs = 48, dpr = 1;
+// 軸：axis = {R, C}（盤の交点。駒 (R-1,C-1)(R-1,C)(R,C)(R,C-1) を回す）
+let axis = null, lifted = false, lift = 0, ang = 0, orig = [], pick = null, sel = null;
+
+function pickKinds(){
+  const others = ETO.map((_, i) => i).filter(i => i !== my);
+  for(let i = others.length - 1; i > 0; i--){ const j = Math.random()*(i+1)|0; [others[i], others[j]] = [others[j], others[i]] }
+  kinds = [my, ...others.slice(0, KINDS - 1)];
+}
+function randKind(){ return Math.random() < CAT_RATE ? CAT : kinds[Math.random()*kinds.length|0] }
+function newTile(k, r, c, startY){ const t = { k, r, c, x: c, y: startY ?? r, s: 1, dying: false }; tiles.push(t); return t }
+
+function makeBoard(){
+  tiles = []; grid = [];
+  for(let r = 0; r < ROWS; r++){
+    grid.push([]);
+    for(let c = 0; c < COLS; c++){
+      let k, guard = 0;
+      do{ k = randKind(); guard++ }
+      while(k !== CAT && guard < 30 && (
+        (c >= 2 && grid[r][c-1].k === k && grid[r][c-2].k === k) ||
+        (r >= 2 && grid[r-1][c].k === k && grid[r-2][c].k === k) ||
+        (r >= 2 && c >= 2 && grid[r-1][c-1].k === k && grid[r-2][c-2].k === k) ||
+        (r >= 2 && c <= COLS-3 && grid[r-1][c+1].k === k && grid[r-2][c+2].k === k)));
+      grid[r].push(newTile(k, r, c, r - ROWS - 1));
+    }
+  }
+}
+
+function findMatches(){
+  // 縦・横・斜め（右下がり／左下がり）に3つ以上並んだら消える
+  const m = new Set();
+  const at = (r, c) => (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? grid[r][c] : null;
+  const same = (a, b) => a && b && a.k !== CAT && a.k === b.k;
+  for(const [dr, dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+    for(let r = 0; r < ROWS; r++) for(let c = 0; c < COLS; c++){
+      if(same(at(r - dr, c - dc), at(r, c))) continue; // 並びの先頭だけ数える
+      let n = 1;
+      while(same(at(r, c), at(r + dr*n, c + dc*n))) n++;
+      if(n >= 3) for(let i = 0; i < n; i++) m.add((r + dr*i)*COLS + (c + dc*i));
+    }
+  }
+  return m;
+}
+
+// ---------- 軸の操作 ----------
+function groupCells(){ const {R, C} = axis; return [[R-1,C-1],[R-1,C],[R,C],[R,C-1]] } // 左上→右上→右下→左下（時計回り）
+function inGroup(t){ return axis && lift > .01 && (t.r === axis.R-1 || t.r === axis.R) && (t.c === axis.C-1 || t.c === axis.C) }
+function setButtons(){ const on = lifted && !busy; ['bL','bOK','bR'].forEach(id => $(id).disabled = !on) }
+
+function doLift(R, C){
+  if(busy || moves <= 0) return;
+  axis = { R, C }; lifted = true; ang = 0; pick = null;
+  orig = groupCells().map(([r, c]) => grid[r][c]);
+  sfx.lift(); setButtons();
+}
+function rotate(dir){ // dir: 1=時計回り, -1=反時計回り
+  if(!lifted || busy) return;
+  const cells = groupCells(), ts = cells.map(([r,c]) => grid[r][c]);
+  cells.forEach(([r, c], i) => {
+    const t = ts[(i - dir + 4) % 4];
+    grid[r][c] = t; t.r = r; t.c = c; t.x = c; t.y = r;
+  });
+  ang -= dir * Math.PI / 2; // 描画は元の位置から回転して追いつく
+  pick = null;
+  sfx.turn(dir);
+}
+// 浮いた4駒のうち2つを入れ替える（横・縦・斜め）
+function swapPair(a, b){
+  if(!lifted || busy) return;
+  const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+  grid[a.r][a.c] = tb; grid[b.r][b.c] = ta;
+  tb.r = a.r; tb.c = a.c; ta.r = b.r; ta.c = b.c;
+  pick = null; sfx.turn(1);
+}
+async function commit(){
+  if(!lifted || busy) return;
+  lifted = false; busy = true; setButtons(); sfx.drop();
+  await waitSettle();
+  const changed = groupCells().some(([r, c], i) => grid[r][c] !== orig[i]);
+  pick = null;
+  if(changed){
+    moves--; hud();
+    await resolve();
+  }
+  axis = null; busy = false; setButtons();
+  if(moves <= 0){ await sleep(350); endGame() }
+}
+
+// 盤面の隣どうし入れ替え（横・縦・斜め）。そろわなければ元に戻る
+async function trySwap(a, b){
+  if(busy || lifted || moves <= 0) return;
+  busy = true; sel = null; setButtons();
+  const ta = grid[a.r][a.c], tb = grid[b.r][b.c];
+  const sw = () => {
+    const x = grid[a.r][a.c], y = grid[b.r][b.c];
+    grid[a.r][a.c] = y; grid[b.r][b.c] = x;
+    y.r = a.r; y.c = a.c; x.r = b.r; x.c = b.c;
+  };
+  sw(); sfx.turn(1);
+  await waitSettle();
+  if(findMatches().size === 0){
+    sw(); tone(220, 160, .12, 'square', .05);
+    await waitSettle(); busy = false; setButtons(); return;
+  }
+  moves--; hud();
+  await resolve();
+  busy = false; setButtons();
+  if(moves <= 0){ await sleep(350); endGame() }
+}
+
+async function resolve(){
+  let m = findMatches(), combo = 0;
+  while(m.size){
+    combo++;
+    const catSet = new Set();
+    m.forEach(idx => {
+      const r = idx / COLS | 0, c = idx % COLS;
+      if(grid[r][c].k !== my) return;
+      for(const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        const n = grid[r+dr]?.[c+dc];
+        if(n && n.k === CAT) catSet.add((r+dr)*COLS + (c+dc));
+      }
+    });
+    const gained = m.size * 10 * combo + catSet.size * 50 * combo;
+    score += gained; cats += catSet.size;
+    sfx.pop(combo); if(catSet.size) setTimeout(sfx.nya, 80);
+    let sc = 0, sr = 0;
+    m.forEach(idx => {
+      const r = idx / COLS | 0, c = idx % COLS, t = grid[r][c];
+      burst(c, r, ETO[t.k][3]); t.dying = true; grid[r][c] = null; sc += c; sr += r;
+    });
+    catSet.forEach(idx => {
+      const r = idx / COLS | 0, c = idx % COLS, t = grid[r][c];
+      burst(c, r, '#d9b25a', 14); t.dying = true; grid[r][c] = null;
+      floatText('にゃ！', c, r, '#d9b25a');
+    });
+    floatText((combo > 1 ? combo + '連 ' : '') + '+' + gained, sc/m.size, sr/m.size, '#f1e8d4');
+    hud();
+    await sleep(200);
+    tiles = tiles.filter(t => !t.dying);
+    gravity();
+    await waitSettle();
+    m = findMatches();
+  }
+}
+
+function gravity(){
+  for(let c = 0; c < COLS; c++){
+    let w = ROWS - 1;
+    for(let r = ROWS - 1; r >= 0; r--){
+      const t = grid[r][c];
+      if(t){ grid[r][c] = null; grid[w][c] = t; t.r = w; w--; }
+    }
+    for(let r = w; r >= 0; r--) grid[r][c] = newTile(randKind(), r, c, r - (w + 1));
+  }
+}
+
+// ---------- animation ----------
+let lastT = performance.now(), settleWaiters = [];
+function settled(){
+  return Math.abs(ang) < .001 && lift < .01 &&
+    tiles.every(t => !t.dying && Math.abs(t.x - t.c) < .001 && Math.abs(t.y - t.r) < .001);
+}
+function waitSettle(){ return new Promise(res => settleWaiters.push(res)) }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function step(now){
+  const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+  const target = lifted ? 1 : 0;
+  lift += (target - lift) * Math.min(1, dt * 16);
+  if(Math.abs(target - lift) < .005) lift = target;
+  ang -= Math.sign(ang) * Math.min(Math.abs(ang), dt * 11);
+  for(const t of tiles){
+    if(t.dying){ t.s -= dt * 5; continue }
+    const sp = 11 * dt;
+    t.x += Math.sign(t.c - t.x) * Math.min(Math.abs(t.c - t.x), sp);
+    t.y += Math.sign(t.r - t.y) * Math.min(Math.abs(t.r - t.y), sp * 1.3);
+  }
+  tiles = tiles.filter(t => !(t.dying && t.s <= 0));
+  parts = parts.filter(p => (p.life -= dt) > 0);
+  parts.forEach(p => { p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 9*dt });
+  floats = floats.filter(f => (f.life -= dt) > 0);
+  floats.forEach(f => f.y -= dt * .8);
+  if(settleWaiters.length && settled()){ const w = settleWaiters; settleWaiters = []; w.forEach(f => f()) }
+  draw(now);
+  requestAnimationFrame(step);
+}
+function burst(c, r, color, n = 8){
+  for(let i = 0; i < n; i++){
+    const a = Math.random()*Math.PI*2, v = 1.5 + Math.random()*2.5;
+    parts.push({ x: c+.5, y: r+.5, vx: Math.cos(a)*v, vy: Math.sin(a)*v - 2, life: .5 + Math.random()*.3, color });
+  }
+}
+function floatText(txt, c, r, color){ floats.push({ txt, x: c, y: r, life: 1, color }) }
+
+// ---------- drawing ----------
+function resize(){
+  const wrap = $('wrap');
+  cs = Math.max(30, Math.floor(Math.min(wrap.clientWidth / COLS, wrap.clientHeight / ROWS)));
+  dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.style.width = COLS*cs + 'px'; cv.style.height = ROWS*cs + 'px';
+  cv.width = COLS*cs*dpr; cv.height = ROWS*cs*dpr;
+}
+window.addEventListener('resize', () => { if(running) resize() });
+function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h) }
+function catReady(t){
+  for(const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const n = grid[t.r+dr]?.[t.c+dc]; if(n && n.k === my) return true;
+  }
+  return false;
+}
+
+function draw(now){
+  if(!running) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = COLS*cs, H = ROWS*cs;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#10172e'; rr(0, 0, W, H, 14); ctx.fill();
+  ctx.save(); rr(0, 0, W, H, 14); ctx.clip();
+  ctx.strokeStyle = 'rgba(217,178,90,.10)'; ctx.lineWidth = 1;
+  for(let c = 1; c < COLS; c++){ ctx.beginPath(); ctx.moveTo(c*cs, 0); ctx.lineTo(c*cs, H); ctx.stroke() }
+  for(let r = 1; r < ROWS; r++){ ctx.beginPath(); ctx.moveTo(0, r*cs); ctx.lineTo(W, r*cs); ctx.stroke() }
+
+  const pulse = .5 + .5*Math.sin(now/260);
+  const rest = [], group = [];
+  for(const t of tiles) (inGroup(t) && !t.dying ? group : rest).push(t);
+  for(const t of rest) drawTile(t, pulse, 0);
+
+  // 交点のしるし（押せる場所）
+  if(!busy){
+    ctx.fillStyle = 'rgba(217,178,90,.35)';
+    for(let r = 1; r < ROWS; r++) for(let c = 1; c < COLS; c++){
+      if(axis && axis.R === r && axis.C === c && lift > .01) continue;
+      const x = c*cs, y = r*cs, d = cs*.1;
+      ctx.beginPath(); ctx.moveTo(x, y-d); ctx.lineTo(x+d, y); ctx.lineTo(x, y+d); ctx.lineTo(x-d, y); ctx.fill();
+    }
+  }
+
+  // 浮いた範囲
+  if(axis && lift > .01){
+    const ax = axis.C*cs, ay = axis.R*cs, L = lift;
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${.45*L})`; rr(ax - cs - 2 + 6*L, ay - cs - 2 + 8*L, cs*2 + 4, cs*2 + 4, cs*.3); ctx.fill();
+    ctx.translate(ax, ay - 6*L); ctx.scale(1 + .08*L, 1 + .08*L); ctx.rotate(ang);
+    ctx.strokeStyle = `rgba(217,178,90,${.9*L})`; ctx.lineWidth = 3;
+    rr(-cs - 2, -cs - 2, cs*2 + 4, cs*2 + 4, cs*.3); ctx.stroke();
+    ctx.translate(-ax, -ay);
+    for(const t of group) drawTile(t, pulse, L);
+    ctx.restore();
+    // 軸
+    ctx.save(); ctx.translate(ax, ay - 6*L);
+    const ar = cs*.24*(.6 + .4*L);
+    ctx.beginPath(); ctx.arc(0, 0, ar, 0, Math.PI*2);
+    ctx.fillStyle = '#d9b25a'; ctx.shadowColor = 'rgba(217,178,90,.9)'; ctx.shadowBlur = lifted ? 10 + 8*pulse : 4; ctx.fill();
+    ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = '#7a5a1c'; ctx.stroke();
+    ctx.fillStyle = '#3a2a10'; ctx.font = `${ar*1.15}px "Yuji Syuku",serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('軸', 0, ar*.05);
+    if(lifted){ // 回転ガイド
+      ctx.strokeStyle = `rgba(241,232,212,${.35 + .3*pulse})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, cs*1.25, -Math.PI*.15, Math.PI*.15); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, cs*1.25, Math.PI*.85, Math.PI*1.15); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  for(const p of parts){
+    ctx.globalAlpha = Math.max(0, p.life*1.6); ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x*cs, p.y*cs, cs*.06, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for(const f of floats){
+    ctx.globalAlpha = Math.min(1, f.life*2);
+    ctx.font = `900 ${cs*.42}px "Zen Maru Gothic",sans-serif`;
+    ctx.lineWidth = 5; ctx.strokeStyle = '#10172e'; ctx.strokeText(f.txt, (f.x+.5)*cs, (f.y+.5)*cs);
+    ctx.fillStyle = f.color; ctx.fillText(f.txt, (f.x+.5)*cs, (f.y+.5)*cs);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTile(t, pulse, liftL){
+  const cx = (t.x+.5)*cs, cy = (t.y+.5)*cs, R = cs*.42;
+  if(cy < -cs) return;
+  ctx.save(); ctx.translate(cx, cy);
+  if(liftL) ctx.rotate(-ang); // 駒の向きは正立のまま
+  const s = Math.max(0, t.s); ctx.scale(s, s);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if(t.k === CAT){
+    const ready = !t.dying && !liftL && catReady(t);
+    rr(-R, -R, R*2, R*2, R*.3); ctx.fillStyle = '#4a4f5e'; ctx.fill();
+    ctx.lineWidth = ready ? 3 + pulse*2 : 2;
+    ctx.strokeStyle = ready ? `rgba(217,178,90,${.6 + pulse*.4})` : '#6d7385'; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.06)'; rr(-R*.8, -R*.8, R*1.6, R*1.6, R*.2); ctx.fill();
+    ctx.font = `${R*1.15}px ${EMOJI_FONT}`; ctx.fillText('🐱', 0, R*.06);
+  }else{
+    const e = ETO[t.k], mine = t.k === my;
+    if(mine){ ctx.shadowColor = 'rgba(217,178,90,.8)'; ctx.shadowBlur = cs*.18 }
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.fillStyle = e[3]; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(0, 0, R*.84, 0, Math.PI*2); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.stroke();
+    if(mine){ ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI*2); ctx.lineWidth = 3.5; ctx.strokeStyle = '#d9b25a'; ctx.stroke() }
+    ctx.font = `${R*1.0}px ${EMOJI_FONT}`; ctx.fillText(e[1], 0, -R*.1);
+    ctx.font = `${R*.46}px "Yuji Syuku",serif`;
+    ctx.fillStyle = e[3] === '#c9bd9c' ? '#3a3126' : '#f7f0e0';
+    ctx.fillText(e[0], R*.52, R*.55);
+  }
+  if((liftL && pick && pick.r === t.r && pick.c === t.c) || (!liftL && !lifted && sel && sel.r === t.r && sel.c === t.c && !t.dying)){
+    ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff';
+    rr(-R-4, -R-4, R*2+8, R*2+8, R*.5); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function hud(){
+  $('vMoves').textContent = moves; $('vScore').textContent = score; $('vCats').textContent = cats;
+  $('hudMoves').classList.toggle('low', moves <= 5);
+}
+
+function startGame(){
+  pickKinds(); score = 0; moves = MOVES; cats = 0; busy = false;
+  axis = null; lifted = false; lift = 0; ang = 0; orig = []; pick = null; sel = null;
+  parts = []; floats = [];
+  $('vMe').textContent = ETO[my][1] + ETO[my][0];
+  $('ruleMe').textContent = ETO[my][0];
+  show('game'); running = true; setButtons();
+  requestAnimationFrame(() => { resize(); makeBoard(); hud() });
+}
+
+function endGame(){
+  const best = Math.max(loadBest(), score); saveBest(best);
+  $('rScore').textContent = score + ' 点';
+  $('rCats').textContent = `一緒に消した猫 ${cats} 匹`;
+  $('rBest').textContent = `さいこう点 ${best}`;
+  $('rRank').textContent = score >= 3000 ? '干支の神さま級' : score >= 2000 ? '年神さまに好かれてる'
+    : score >= 1200 ? 'なかなかの年男・年女' : score >= 600 ? 'まだまだ伸びる' : 'ねこに遊ばれた';
+  $('result').classList.add('on');
+}
+
+// ---------- input ----------
+let press = null;
+function cellPos(e){ const b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) / cs, y: (e.clientY - b.top) / cs } }
+function nearestAxis(p){
+  const C = Math.min(COLS-1, Math.max(1, Math.round(p.x))), R = Math.min(ROWS-1, Math.max(1, Math.round(p.y)));
+  return { R, C, d: Math.hypot(p.x - C, p.y - R) };
+}
+cv.addEventListener('pointerdown', e => {
+  if(busy || !running) return;
+  const p = cellPos(e);
+  cv.setPointerCapture(e.pointerId);
+  if(lifted){
+    const d = Math.hypot(p.x - axis.C, p.y - axis.R);
+    const dx = p.x - axis.C, dy = p.y - axis.R;
+    const piece = (d >= .45 && Math.abs(dx) < 1 && Math.abs(dy) < 1)
+      ? { r: axis.R + (dy < 0 ? -1 : 0), c: axis.C + (dx < 0 ? -1 : 0) } : null;
+    press = { onAxis: d < .4, piece: null, a0: d > .35 ? Math.atan2(dy, dx) : null, rotated: false, p };
+  }else{
+    const n = nearestAxis(p);
+    if(n.d < .3){ sel = null; doLift(n.R, n.C); press = { justLifted: true, a0: null, rotated: false, p } }
+    else {
+      const r = Math.floor(p.y), c = Math.floor(p.x);
+      press = (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? { board: { r, c }, x: e.clientX, y: e.clientY } : null;
+    }
+  }
+});
+cv.addEventListener('pointermove', e => {
+  if(press && press.board && !busy){
+    const dx = e.clientX - press.x, dy = e.clientY - press.y;
+    if(Math.hypot(dx, dy) < cs*.35) return;
+    const k = Math.round(Math.atan2(dy, dx) / (Math.PI/4)); // 8方向
+    const dc = Math.round(Math.cos(k*Math.PI/4)), dr = Math.round(Math.sin(k*Math.PI/4));
+    const a = press.board, b = { r: a.r + dr, c: a.c + dc }; press = null;
+    if(b.r >= 0 && b.r < ROWS && b.c >= 0 && b.c < COLS) trySwap(a, b);
+    return;
+  }
+  if(!press || !lifted || busy) return;
+  const p = cellPos(e), dx = p.x - axis.C, dy = p.y - axis.R;
+  if(Math.hypot(dx, dy) < .35) return;
+  const a = Math.atan2(dy, dx);
+  if(press.a0 === null){ press.a0 = a; return }
+  let d = a - press.a0;
+  while(d > Math.PI) d -= Math.PI*2;
+  while(d < -Math.PI) d += Math.PI*2;
+  if(d > .75){ rotate(1); press.a0 = a; press.rotated = true }
+  else if(d < -.75){ rotate(-1); press.a0 = a; press.rotated = true }
+});
+cv.addEventListener('pointerup', e => {
+  if(!press) return;
+  const pr = press; press = null;
+  if(pr.board){ // 2回タップで入れ替え
+    const p = pr.board;
+    if(sel && Math.max(Math.abs(sel.r - p.r), Math.abs(sel.c - p.c)) === 1){ const a = sel; trySwap(a, p) }
+    else if(sel && sel.r === p.r && sel.c === p.c) sel = null;
+    else sel = p;
+    return;
+  }
+  if(!lifted || pr.rotated || pr.justLifted) return;
+  if(pr.onAxis){ commit(); return }
+
+  // 別の交点を押したら、いまの軸を収めてからそっちを浮かせる
+  const n = nearestAxis(cellPos(e));
+  if(n.d < .3 && (n.R !== axis.R || n.C !== axis.C)) commit().then(() => doLift(n.R, n.C));
+});
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
+requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
