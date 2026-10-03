@@ -53,7 +53,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
 
 /* タイトル（和） */
 #title{
-  justify-content:flex-start;gap:10px;
+  justify-content:center;gap:clamp(16px,3vh,26px);
   background:
     radial-gradient(ellipse 130% 70% at 50% 8%,rgba(183,57,42,.42),transparent 62%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='45'%3E%3Cg fill='none' stroke='%23d4a843' stroke-opacity='.11' stroke-width='1.4'%3E%3Cpath d='M-45 45a45 45 0 0 1 90 0M0 45a45 45 0 0 1 90 0M45 45a45 45 0 0 1 90 0'/%3E%3Cpath d='M-45 45a30 30 0 0 1 90 0M0 45a30 30 0 0 1 90 0M45 45a30 30 0 0 1 90 0'/%3E%3Cpath d='M-45 45a15 15 0 0 1 90 0M0 45a15 15 0 0 1 90 0M45 45a15 15 0 0 1 90 0'/%3E%3C/g%3E%3C/svg%3E"),
@@ -80,7 +80,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
   padding:9px 5px;transform:rotate(3deg);
   box-shadow:0 2px 6px rgba(0,0,0,.55);
 }
-.ring{position:relative;width:min(84vw,344px);aspect-ratio:1;z-index:1;flex:0 0 auto;margin:auto}
+.ring{position:relative;width:min(84vw,344px);aspect-ratio:1;z-index:1;flex:0 0 auto;margin:0}
 .ring::before{ /* 円相 */
   content:'';position:absolute;inset:7%;border-radius:50%;
   border:2px solid rgba(212,168,67,.55);
@@ -169,7 +169,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
 
 /* ゲーム */
 #game{
-  justify-content:flex-start;gap:6px;
+  justify-content:center;gap:6px;
   padding:max(6px, env(safe-area-inset-top,0px)) 6px max(6px, env(safe-area-inset-bottom,0px));
 }
 .hud{width:100%;display:flex;align-items:stretch;gap:4px;flex-shrink:0}
@@ -196,7 +196,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
 .hud .snd{flex:0 0 48px;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;font-size:20px;padding:0;touch-action:manipulation}
 .hud .snd.off{opacity:.45}
 
-#wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;touch-action:none}
+#wrap{flex:0 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;touch-action:none}
 .garan{
   position:relative;padding:8px 8px 10px;border-radius:3px;
   background:linear-gradient(90deg,var(--shu3),var(--shu) 16%,var(--shu2) 50%,var(--shu) 84%,var(--shu3));
@@ -725,6 +725,10 @@ function cellRejected(r, c, k){
   if(k === CAT) return false;
   return wouldTripleAt(r, c, k);
 }
+function enterY(r){
+  // 盤の全高より上から始めると、落下処理が止まったとき駒が画面外のままになる
+  return -1.08 - (ROWS - 1 - r) * 0.16;
+}
 function newTile(k, r, c, startY){
   const t = { k, r, c, x: c, y: startY ?? r, s: 1, dying: false, age: 0, fl: 0, rot: 0, sq: 0, fall: false, id: uid++ };
   tiles.push(t); return t;
@@ -755,13 +759,13 @@ function makeBoard(){
     for(let i = 0; i < ETO_COUNT; i++){
       const { r, c } = anchor[i], k = order[i];
       if(cellRejected(r, c, k)){ fail = true; break; }
-      grid[r][c] = newTile(k, r, c, r - ROWS - 1);
+      grid[r][c] = newTile(k, r, c, enterY(r));
     }
     if(fail) continue;
     refillSpawnBag(4);
     for(const { r, c } of rest){
       const k = pickKindForCell(r, c);
-      grid[r][c] = newTile(k, r, c, r - ROWS - 1);
+      grid[r][c] = newTile(k, r, c, enterY(r));
     }
     if(findMatches().size === 0 && hasMoves()) built = true;
   }
@@ -773,12 +777,30 @@ function makeBoard(){
       grid.push([]);
       for(let c = 0; c < COLS; c++){
         const k = pickKindForCell(r, c);
-        grid[r].push(newTile(k, r, c, r - ROWS - 1));
+        grid[r].push(newTile(k, r, c, enterY(r)));
       }
     }
   }
   scanBoardKinds();
   if(!hasMoves()) shuffle();
+}
+
+function bootBoard(){
+  try { makeBoard(); }
+  catch(e) { tiles = []; grid = []; }
+  if(tiles.length < ROWS * COLS){
+    tiles = []; grid = [];
+    for(let r = 0; r < ROWS; r++){
+      grid.push([]);
+      for(let c = 0; c < COLS; c++){
+        grid[r].push(newTile((r + c) % ETO_COUNT, r, c, enterY(r)));
+      }
+    }
+    scanBoardKinds();
+  }
+  for(const t of tiles){
+    if(t && t.y < -1.2) t.y = enterY(t.r);
+  }
 }
 
 function isEtoK(k){ return k !== CAT && k >= 0 && k < 12 }
@@ -801,7 +823,7 @@ function wouldTripleAt(r, c, k){
         const t = o + i;
         const rr = r + t * dr, cc = c + t * dc;
         if(rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS){ ok = false; break; }
-        const v = t === 0 ? k : grid[rr][cc]?.k;
+        const v = t === 0 ? k : grid[rr]?.[cc]?.k;
         if(v === undefined || v === null){ ok = false; break; }
         vals.push(v);
       }
@@ -815,7 +837,7 @@ function findMatches(){
   const m = new Set();
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     for(const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
-      const a=grid[r][c]?.k,b=grid[r+dr]?.[c+dc]?.k,d=grid[r+2*dr]?.[c+2*dc]?.k;
+      const a=grid[r]?.[c]?.k,b=grid[r+dr]?.[c+dc]?.k,d=grid[r+2*dr]?.[c+2*dc]?.k;
       if(trioMatch(a,b,d)) for(let i=0;i<3;i++) m.add((r+i*dr)*COLS+c+i*dc);
     }
   }
@@ -918,7 +940,7 @@ function shuffle(){
 }
 
 // ---------- animation ----------
-let lastT = performance.now(), settleWaiters = [];
+let lastT = performance.now(), settleWaiters = [], offscreenT = 0;
 function settled(){
   return Math.abs(ang) < .001 && lift < .01 &&
     tiles.every(t => !t.dying && Math.abs(t.x - t.c) < .001 && Math.abs(t.y - t.r) < .001);
@@ -927,9 +949,11 @@ function waitSettle(){ return new Promise(res => settleWaiters.push(res)) }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function step(now){
+  requestAnimationFrame(step);
   const raw = Math.min(.05, (now - lastT) / 1000); lastT = now;
   let dt = raw;
   if(hs > 0){ hs -= raw; dt = 0 }          // ヒットストップ＝盤だけ一瞬止める
+  const fallDt = dt > 0 ? dt : raw;        // 画面外の駒はヒットストップ中も落とす
 
   const liftTarget = lifted ? 1 : 0;
   lift += (liftTarget - lift) * Math.min(1, dt * 16);
@@ -944,7 +968,8 @@ function step(now){
       else { const b = Math.min(1, (t.age-.07)/.15); t.s = 1.38*(1-b)*(1-b); t.fl = Math.max(0, 1-b*1.5); t.rot = b*.9 }
       continue;
     }
-    const sp = 11 * dt;
+    const dropping = t.y < t.r - 0.05;
+    const sp = 11 * (dropping ? fallDt : dt);
     t.x += Math.sign(t.c - t.x) * Math.min(Math.abs(t.c - t.x), sp);
     const before = t.r - t.y;
     t.y += Math.sign(t.r - t.y) * Math.min(Math.abs(t.r - t.y), sp * 1.45);
@@ -979,9 +1004,27 @@ function step(now){
     idle += raw;
     if(idle >= HINT_SEC && !hintCells.length) hintCells = findHint();
   }
+  if(running && !ended && tiles.length === 0 && timeLeft < TIME - 0.25) bootBoard();
+  if(running && tiles.length){
+    let parked = 0, alive = 0;
+    for(const t of tiles){
+      if(t.dying) continue;
+      alive++;
+      if(t.y < -1.15) parked++;
+    }
+    if(alive && parked * 2 > alive){
+      offscreenT += raw;
+      if(offscreenT > 0.45){
+        for(const t of tiles) if(!t.dying && t.y < -1.15) t.y = -1.05;
+      }
+      if(offscreenT > 1.1){
+        for(const t of tiles) if(!t.dying && t.y < t.r) t.y = t.r;
+        offscreenT = 0;
+      }
+    }else if(!parked) offscreenT = 0;
+  }
   bgmTick(); syncBgmVol();
-  draw(now);
-  requestAnimationFrame(step);
+  try{ draw(now) }catch(e){}
 }
 
 function burst(c, r, color, n = 8){
@@ -1094,6 +1137,7 @@ function strokeKanji(txt, x, y, size, fill, stroke, lw){
 // 軒丸瓦（のきまるがわら）の蓮華文タイル — draw() から呼ぶ
 function draw(now){
   if(!running) return;
+  ctx.globalAlpha = 1;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const W = COLS*cs, H = ROWS*cs;
   ctx.clearRect(0, 0, W, H);
@@ -1295,12 +1339,12 @@ function startGame(){
   resetKinds(); resetEtoSeen(); refillSpawnBag(); score = 0; timeLeft = TIME; cleared = 0; cats = 0; rescues = 2; stuck = false; busy = false; sel = null; ended = false;
   axis = null; lifted = false; lift = 0; ang = 0; orig = []; pick = null;
   idle = 0; hintCells = [];
-  parts = []; floats = []; waves = []; beams = []; shake = 0; flash = 0; hs = 0;
+  parts = []; floats = []; waves = []; beams = []; shake = 0; flash = 0; hs = 0; offscreenT = 0;
   $('vMe').textContent = ETO[my][0] + '・' + ETO[my][2];
   $('ruleMe').textContent = ETO[my][0];
   show('game'); running = true; syncBgmVol();
   requestAnimationFrame(() => {
-    resize(); makeBoard(); hud();
+    resize(); bootBoard(); hud();
     requestAnimationFrame(resize);
   });
 }
@@ -1418,7 +1462,8 @@ function gravity(){
     }
     for(let r = w; r >= 0; r--){
       const k = pickKindForCell(r, c);
-      grid[r][c] = newTile(k, r, c, r - (w + 1));
+      const from = Math.max(r - (w + 1), enterY(r));
+      grid[r][c] = newTile(k, r, c, from);
     }
   }
 }
@@ -1529,7 +1574,6 @@ cv.addEventListener('pointerup', e => {
 cv.addEventListener('pointercancel', e => { if(press && e.pointerId === press.id) press = null });
 
 requestAnimationFrame(step);
-window.__eto = { makeBoard, get tiles(){ return tiles }, get grid(){ return grid } };
 })();
 </script>
 </body>
