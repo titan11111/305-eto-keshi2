@@ -786,15 +786,16 @@ function wouldTripleAt(r, c, k){
   for(const [dr, dc] of [[0,1],[1,0],[1,1],[1,-1]]){
     for(let o = -2; o <= 0; o++){
       const vals = [];
+      let ok = true;
       for(let i = 0; i < 3; i++){
         const t = o + i;
         const rr = r + t * dr, cc = c + t * dc;
-        if(rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS){ vals = null; break; }
+        if(rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS){ ok = false; break; }
         const v = t === 0 ? k : grid[rr][cc]?.k;
-        if(v === undefined || v === null){ vals = null; break; }
+        if(v === undefined || v === null){ ok = false; break; }
         vals.push(v);
       }
-      if(vals && vals.length === 3 && isEtoK(vals[0]) && isEtoK(vals[1]) && isEtoK(vals[2]) && trioMatch(vals[0], vals[1], vals[2])) return true;
+      if(ok && vals.length === 3 && isEtoK(vals[0]) && isEtoK(vals[1]) && isEtoK(vals[2]) && trioMatch(vals[0], vals[1], vals[2])) return true;
     }
   }
   return false;
