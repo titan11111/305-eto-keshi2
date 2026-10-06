@@ -97,7 +97,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .ring .cat{color:#f0b64e}
 .title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
-.tcol{display:flex;flex-direction:row-reverse;align-items:center;gap:clamp(8px,2vw,12px)}
+.tcol{display:flex;flex-direction:row-reverse;align-items:center;gap:clamp(14px,4vw,22px)}
 .title h1{
   margin:0;font-family:"Yuji Syuku",serif;font-weight:400;
   writing-mode:vertical-rl;text-orientation:upright;
@@ -169,7 +169,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
 
 /* ゲーム */
 #game{
-  justify-content:center;gap:6px;
+  justify-content:flex-start;gap:6px;
   padding:max(6px, env(safe-area-inset-top,0px)) 6px max(6px, env(safe-area-inset-bottom,0px));
 }
 .hud{width:100%;display:flex;align-items:stretch;gap:4px;flex-shrink:0}
@@ -196,7 +196,7 @@ button.is-pressed{transform:scale(.92);opacity:.88}
 .hud .snd{flex:0 0 48px;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;font-size:20px;padding:0;touch-action:manipulation}
 .hud .snd.off{opacity:.45}
 
-#wrap{flex:0 1 auto;min-height:0;width:100%;height:min(125vw,600px,calc(100dvh - 180px));display:flex;align-items:center;justify-content:center;touch-action:none}
+#wrap{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;touch-action:none}
 .garan{
   position:relative;padding:8px 8px 10px;border-radius:3px;
   background:linear-gradient(90deg,var(--shu3),var(--shu) 16%,var(--shu2) 50%,var(--shu) 84%,var(--shu3));
@@ -280,13 +280,14 @@ canvas{display:block;border-radius:2px;touch-action:none;box-shadow:inset 0 0 0 
 .card .ghost:active,.card .ghost.is-pressed{background:rgba(183,57,42,.10)}
 .ring .title .seq{
   display:flex;align-items:center;justify-content:center;
-  position:relative;left:auto;top:auto;flex:0 0 auto;align-self:flex-end;
-  width:29px;height:29px;margin-bottom:18px;
-  font-family:"Yuji Syuku",serif;font-size:20px;font-weight:400;font-style:normal;
-  line-height:1;letter-spacing:0;color:#fdf3e4;text-shadow:0 1px 1px #5c1710;
-  background:#b7392a;border:1px solid #e2705c;border-radius:2px;
-  box-shadow:0 2px 6px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.18);
-  transform:rotate(-6deg);
+  position:relative;left:auto;top:auto;flex:0 0 auto;align-self:center;
+  width:clamp(46px,13vw,58px);height:clamp(46px,13vw,58px);margin:0;
+  font-family:"Dela Gothic One","Yuji Syuku",serif;font-size:clamp(26px,7.4vw,34px);font-weight:400;font-style:normal;
+  line-height:1;letter-spacing:0;color:#3a1c12;text-shadow:none;
+  background:radial-gradient(circle at 32% 28%,#fff6d2,#e8c04a 56%,#b8861f 100%);
+  border:2px solid #f3e0a4;border-radius:50%;
+  box-shadow:0 2px 0 #6b1c12,0 0 0 1px rgba(183,57,42,.38),0 0 14px rgba(212,168,67,.55);
+  transform:rotate(-8deg);
 }
 @media (prefers-reduced-motion: reduce){
   .hanko:active{transform:none} .garan{transform:none!important}
@@ -312,8 +313,8 @@ canvas{display:block;border-radius:2px;touch-action:none;box-shadow:inset 0 0 0 
     <div class="ring" id="ring">
       <div class="title">
         <div class="tcol">
-          <h1 aria-label="干支けし2">干支けし</h1>
           <span class="seq" aria-hidden="true">2</span>
+          <h1 aria-label="干支けし2">干支けし</h1>
           <p>まわして、そろえる。</p>
         </div>
         <i class="rakkan" aria-hidden="true">猫</i>
@@ -358,6 +359,7 @@ canvas{display:block;border-radius:2px;touch-action:none;box-shadow:inset 0 0 0 
       <div class="box"><div class="lb">猫</div><div class="v" id="vCats">0</div></div>
       <div class="box me"><div class="lb">あなた</div><div class="v" id="vMe">🐯寅</div></div>
       <button class="box snd" id="btnSnd" aria-label="BGMと効果音のオンオフ">🔔</button>
+      <button class="box snd" id="btnEco" aria-label="省電力モードのオンオフ" title="省電力">❄</button>
     </div>
     <div id="wrap"><div class="garan" id="garan"><canvas id="cv"></canvas></div></div>
     <div class="ctrl">
@@ -403,7 +405,7 @@ const ETO = [
   ['午','🐴','うま','#b93c2c'], ['未','🐑','ひつじ','#cdbf9a'], ['申','🐵','さる','#a86234'],
   ['酉','🐔','とり','#b23a5e'], ['戌','🐶','いぬ','#4e6fa3'], ['亥','🐗','い','#5a6b3a']
 ];
-const COLS = 8, ROWS = 10, CAT = -1, TIME = 180, CAT_RATE = 0.09;
+const COLS = 8, ROWS = 12, CAT = -1, TIME = 180, CAT_RATE = 0.09;
 const ETO_COUNT = 12; // 1ゲームで出現する干支は常に12種すべて（猫は別確率）
 const RANK = [600, 450, 300, 150];   // 消した枚数のしきい値（神域／達人／一人前／端数）
 // 根拠（WebKit 390×844・3分の自動プレイ実測）: 即断ボット=294手/1380枚、1.2秒考えるボット=104手/450枚。1手あたり約4.3枚
@@ -439,6 +441,11 @@ function loadMute(){
   }catch(e){ return false }
 }
 function saveMute(v){ try{ localStorage.setItem('tg.305.mute', v ? '1' : '0') }catch(e){} }
+/* 省電力：既定ON。iPhoneのProMotionは毎秒120回描けてしまい、見た目は変わらず本体だけ熱くなる */
+function loadEco(){ try{ return localStorage.getItem('tg.305.eco') !== '0' }catch(e){ return true } }
+function saveEco(v){ try{ localStorage.setItem('tg.305.eco', v ? '1' : '0') }catch(e){} }
+let eco = loadEco(), fLast = 0;
+const frameGap = () => eco ? 32 : 15;   /* 約30fps / 約60fps。どちらも120fpsにはしない */
 
 // ---------- sound ----------
 let ac = null, master = null, bgmGain = null, muted = loadMute();
@@ -582,6 +589,12 @@ const sfx = {
 };
 function buzz(ms){ if(!muted && navigator.vibrate) try{ navigator.vibrate(ms) }catch(e){} }
 function refreshSnd(){ $('btnSnd').textContent = muted ? '🔇' : '🔔'; $('btnSnd').classList.toggle('off', muted) }
+function refreshEco(){
+  const b = $('btnEco'); if(!b) return;
+  b.textContent = eco ? '❄' : '⚡';
+  b.classList.toggle('off', !eco);
+  b.title = eco ? '省電力 ON（30fps・本体が熱くなりにくい）' : '省電力 OFF（60fps・なめらか）';
+}
 
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => {
@@ -611,6 +624,8 @@ function bindTap(el, handler){
 }
 
 bindTap($('btnSnd'), () => { muted = !muted; saveMute(muted); setMasterMute(); refreshSnd(); syncBgmVol(); if(!muted){ bell(step2f(0), .4, .09) } });
+bindTap($('btnEco'), () => { eco = !eco; saveEco(eco); refreshEco(); if(running) resize() });
+refreshEco();
 refreshSnd();
 
 // ---------- screens ----------
@@ -664,7 +679,7 @@ bindTap($('bR'), () => rotate(1));
 bindTap($('bOK'), () => commit());
 
 // ---------- game state ----------
-const cv = $('cv'), ctx = cv.getContext('2d'), garan = $('garan');
+const cv = $('cv'), garan = $('garan'); let ctx = cv.getContext('2d');
 let my = loadMe() ?? 2, kinds = [], spawnBag = [], etoSeen = new Uint8Array(ETO_COUNT), grid = [], tiles = [], parts = [], floats = [], waves = [], beams = [];
 let score = 0, timeLeft = TIME, cleared = 0, cats = 0, rescues = 2, stuck = false, busy = false, sel = null, running = false, ended = false, cs = 48, dpr = 1;
 // 迷ったら光らせる：最後に消してからの経過秒。HINT_SEC で光り出す
@@ -950,6 +965,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function step(now){
   requestAnimationFrame(step);
+  if(now - fLast < frameGap() - 2) return;   /* 間引いた分は dt にまとまるので進行速度は変わらない */
+  fLast = now;
   const raw = Math.min(.05, (now - lastT) / 1000); lastT = now;
   let dt = raw;
   if(hs > 0){ hs -= raw; dt = 0 }          // ヒットストップ＝盤だけ一瞬止める
@@ -1052,10 +1069,10 @@ function resize(){
   const padY = parseFloat(gs.paddingTop) + parseFloat(gs.paddingBottom);
   const w = wrap.clientWidth - padX - 4, h = wrap.clientHeight - padY - 22;
   cs = Math.max(28, Math.floor(Math.min(w / COLS, h / ROWS)));
-  dpr = Math.min(3, window.devicePixelRatio || 1);
+  dpr = Math.min(eco ? 2 : 3, window.devicePixelRatio || 1);
   cv.style.width = COLS*cs + 'px'; cv.style.height = ROWS*cs + 'px';
   cv.width = COLS*cs*dpr; cv.height = ROWS*cs*dpr;
-  buildBg();
+  buildBg(); bakeTiles();
 }
 function onViewResize(){ if(running) resize() }
 window.addEventListener('resize', onViewResize);
@@ -1118,6 +1135,67 @@ function catReady(t){
   return false;
 }
 
+/* ===== 駒スプライト（発熱対策）=====
+   駒の顔は「種類が同じなら毎回まったく同じ絵」。それを盤上96枚ぶん、
+   花弁8枚のベジェ＋円弧3本＋毛筆フォントの文字描画で毎フレーム描き直していたのが発熱源。
+   種類ごとに1枚だけ焼いて、あとは drawImage で貼る。 */
+let TSPR = null, CSPR = null, sprPad = 0, sprSz = 0, DIA = null;
+function paintEtoFace(k, R){
+  const e = ETO[k], mine = k === my;
+  if(mine){ ctx.shadowColor = 'rgba(212,168,67,.85)'; ctx.shadowBlur = cs*.20 }
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fillStyle = e[3]; ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,.16)';
+  for(let i = 0; i < 8; i++){
+    ctx.save(); ctx.rotate(i/8*TAU);
+    ctx.beginPath(); ctx.moveTo(0, -R*.30);
+    ctx.quadraticCurveTo(R*.21, -R*.68, 0, -R*.92);
+    ctx.quadraticCurveTo(-R*.21, -R*.68, 0, -R*.30);
+    ctx.fill(); ctx.restore();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = Math.max(1, R*.09);
+  ctx.beginPath(); ctx.arc(0, 0, R*.955, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, R*.22, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fill();
+  if(mine){ ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.lineWidth = 3.5; ctx.strokeStyle = '#d4a843'; ctx.stroke() }
+  drawEtoMark(k, R, -R * 0.12);
+  drawEtoLabel(e, R);
+}
+function paintCatFace(R){
+  rr(-R, -R, R*2, R*2, R*.12);
+  const g = ctx.createLinearGradient(-R, -R, R, R);
+  g.addColorStop(0, '#6a5f52'); g.addColorStop(1, '#4a433b');
+  ctx.fillStyle = g; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = '#b7392a'; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,248,235,.12)'; rr(-R*.78, -R*.78, R*1.56, R*1.56, R*.08); ctx.fill();
+  const s = R * 1.26; ctx.drawImage(NEKO_SPR, -s / 2, -R * 0.12 - s * 0.5, s, s);
+  strokeKanji('猫', 0, R * 0.82, R * 0.30, '#f6f1e6', '#2b2520', Math.max(2, R * 0.07));
+}
+function bakeTiles(){
+  const R = cs*.46;
+  sprPad = Math.ceil(cs*.30);            /* 光彩と「猫」の字が切れない余白 */
+  sprSz = Math.ceil(R*2 + sprPad*2);
+  const mk = paint => {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(sprSz*dpr);
+    const g2 = c.getContext('2d');
+    g2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g2.translate(sprSz/2, sprSz/2);
+    g2.textAlign = 'center'; g2.textBaseline = 'middle';
+    const oc = ctx; ctx = g2; paint(R); ctx = oc;   /* 既存の描画コードをそのまま使う */
+    return c;
+  };
+  TSPR = ETO.map((e, k) => mk(() => paintEtoFace(k, R)));
+  CSPR = mk(() => paintCatFace(R));
+  /* 交点の◇は77個。1本の経路にまとめると塗りは1回で済む */
+  if(typeof Path2D !== 'undefined'){
+    const p = new Path2D(), d = cs*.1;
+    for(let r = 1; r < ROWS; r++) for(let c = 1; c < COLS; c++){
+      const x = c*cs, y = r*cs;
+      p.moveTo(x, y-d); p.lineTo(x+d, y); p.lineTo(x, y+d); p.lineTo(x-d, y); p.closePath();
+    }
+    DIA = p;
+  }
+}
 function drawEtoMark(k, R, y){
   const s = R * 1.26;                       // 猫の顔と同じ見かけの大きさに揃える
   ctx.drawImage(ETO_SPR[k], -s / 2, y - s * 0.5, s, s);
@@ -1137,6 +1215,7 @@ function strokeKanji(txt, x, y, size, fill, stroke, lw){
 // 軒丸瓦（のきまるがわら）の蓮華文タイル — draw() から呼ぶ
 function draw(now){
   if(!running) return;
+  if(!TSPR) return;   /* 駒を焼く前のフレームは描かない */
   ctx.globalAlpha = 1;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const W = COLS*cs, H = ROWS*cs;
@@ -1161,8 +1240,10 @@ function draw(now){
 
   if(!busy){
     ctx.fillStyle = 'rgba(212,168,67,.38)';
-    for(let r = 1; r < ROWS; r++) for(let c = 1; c < COLS; c++){
-      if(axis && axis.R === r && axis.C === c && lift > .01) continue;
+    const hideOne = !!(axis && lift > .01);
+    if(!hideOne && DIA) ctx.fill(DIA);
+    else for(let r = 1; r < ROWS; r++) for(let c = 1; c < COLS; c++){
+      if(hideOne && axis.R === r && axis.C === c) continue;
       const x = c*cs, y = r*cs, d = cs*.1;
       ctx.beginPath(); ctx.moveTo(x, y-d); ctx.lineTo(x+d, y); ctx.lineTo(x, y+d); ctx.lineTo(x-d, y); ctx.fill();
     }
@@ -1264,39 +1345,17 @@ function drawTile(t, pulse, liftL){
       ctx.beginPath(); ctx.arc(0, 0, R*1.32, 0, TAU);
       ctx.fillStyle = `rgba(212,168,67,${.12 + pulse*.18})`; ctx.fill();
     }
-    rr(-R, -R, R*2, R*2, R*.12);
-    const g = ctx.createLinearGradient(-R, -R, R, R);
-    g.addColorStop(0, '#6a5f52'); g.addColorStop(1, '#4a433b');
-    ctx.fillStyle = g; ctx.fill();
-    ctx.lineWidth = ready ? 3.5 + pulse*2 : 2.5;
-    ctx.strokeStyle = ready ? `rgba(212,168,67,${.75 + pulse*.25})` : '#b7392a'; ctx.stroke();
-    ctx.fillStyle = 'rgba(255,248,235,.12)'; rr(-R*.78, -R*.78, R*1.56, R*1.56, R*.08); ctx.fill();
-    { const s = R * 1.26; ctx.drawImage(NEKO_SPR, -s / 2, -R * 0.12 - s * 0.5, s, s) }
-    strokeKanji('猫', 0, R * 0.82, R * 0.30, '#f6f1e6', '#2b2520', Math.max(2, R * 0.07));
+    ctx.drawImage(CSPR, -sprSz/2, -sprSz/2, sprSz, sprSz);
     if(ready){
+      rr(-R, -R, R*2, R*2, R*.12);
+      ctx.lineWidth = 3.5 + pulse*2;
+      ctx.strokeStyle = `rgba(212,168,67,${.75 + pulse*.25})`; ctx.stroke();
       ctx.font = `700 ${R * 0.20}px "Zen Maru Gothic",sans-serif`;
       ctx.fillStyle = `rgba(212,168,67,${.85 + pulse * .15})`;
       ctx.fillText('消せる', 0, -R * 0.92);
     }
   }else{
-    const e = ETO[t.k], mine = t.k === my;
-    if(mine){ ctx.shadowColor = 'rgba(212,168,67,.85)'; ctx.shadowBlur = cs*.20 }
-    ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fillStyle = e[3]; ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255,255,255,.16)';
-    for(let i = 0; i < 8; i++){
-      ctx.save(); ctx.rotate(i/8*TAU);
-      ctx.beginPath(); ctx.moveTo(0, -R*.30);
-      ctx.quadraticCurveTo(R*.21, -R*.68, 0, -R*.92);
-      ctx.quadraticCurveTo(-R*.21, -R*.68, 0, -R*.30);
-      ctx.fill(); ctx.restore();
-    }
-    ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = Math.max(1, R*.09);
-    ctx.beginPath(); ctx.arc(0, 0, R*.955, 0, TAU); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, 0, R*.22, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fill();
-    if(mine){ ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.lineWidth = 3.5; ctx.strokeStyle = '#d4a843'; ctx.stroke() }
-    drawEtoMark(t.k, R, -R * 0.12);
-    drawEtoLabel(e, R);
+    ctx.drawImage(TSPR[t.k], -sprSz/2, -sprSz/2, sprSz, sprSz);
     if(t.fl > 0){
       ctx.beginPath(); ctx.arc(0, 0, R*1.02, 0, TAU);
       ctx.fillStyle = `rgba(255,248,224,${t.fl*.92})`; ctx.fill();
